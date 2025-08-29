@@ -11,20 +11,25 @@ spec:
       # Please note:
       # - The 'include' line must match the associated PerformanceProfile name, following below pattern
       #   include=openshift-node-performance-${PerformanceProfile.metadata.name}
-      # When using the standard (non-realtime) kernel, disable timer migration by adding the following in the data section:
-      # [sysctl]
-      # kernel.timer_migration=0
       data: |
         [main]
         summary=Configuration changes profile inherited from performance created tuned
-        include=openshift-node-performance-openshift-node-performance-profile
+        include=openshift-node-performance-openshift-node-performance-profile,performance-patch-${f:lscpu_check:Vendor ID\:\s*GenuineIntel:intel:Vendor ID\:\s*AuthenticAMD:amd:Architecture\:\s*aarch64:arm}-${f:lscpu_check:Architecture\:\s*x86_64:x86:Architecture\:\s*aarch64:aarch64}
+        [service]
+        service.chronyd=stop,disable
+        service.stalld=start,enable
+    - name: performance-patch-arm-aarch64
+      data: |
+        [main]
+        summary=Configuration specific to aarch64 performance tuned
+    - name: performance-patch-intel-x86
+      data: |
+        [main]
+        summary=Configuration specific to x86_64 performance tuned
         [scheduler]
         group.ice-ptp=0:f:10:*:ice-ptp.*
         group.ice-gnss=0:f:10:*:ice-gnss.*
         group.ice-dplls=0:f:10:*:ice-dplls.*
-        [service]
-        service.stalld=start,enable
-        service.chronyd=stop,disable
   recommend:
     - machineConfigLabels:
         machineconfiguration.openshift.io/role: $mcp
